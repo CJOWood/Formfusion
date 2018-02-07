@@ -1,12 +1,16 @@
-/**
-  *
-  * COPYRIGHT CHRIS WOOD (CHRIS@CHRISWOOD.ORG)
-  * ALL RIGHT RESERVED
-  * MY BE USED ONLY WITH PERMISSION OF AUTHOR
-  *
-  * Version 0.2 - Development
-  *
-**/
+/* Copyright (C) 2018 Chris Wood (chris@chriswood.org)
+ * This file is part of FormFusion.
+ * 
+ * FormFusion is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * FormFusion is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
 
 var ADDON_TITLE = "Formfusion";
 var NOTICE = "";
