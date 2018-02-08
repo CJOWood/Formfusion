@@ -12,70 +12,257 @@
  * GNU General Public License for more details.
  */
 
-function options() {
-  var savePDF = function(){
-    return OPTIONS.save_PDF;
-  };
-  var saveDocument = function(){
-    return OPTIONS.save_Document;
-  };
-  var emailPDF = function(){
-    return OPTIONS.email_PDF;
-  };
-  var pdfName = function(){
-     //TODO if null name give it a defualt
-    return PDF_NAME; 
-  }
-  var documentName = function(){
-    
-    //TODO if null name give it a defualt
-    return DOCUMENT_NAME; 
-  }
-  var documentSaveLocation = function(){
-    //Either get specified save location or the location of the template.
-    try{
-      return DOCUMENT_SAVE_LOCATION ? DriveApp.getFolderById(DOCUMENT_SAVE_LOCATION) : template.getParents().next();
-    }catch(e){
-      Logger.log(e);
+function Config() {
+  var documentProperties = PropertiesService.getDocumentProperties();
+  var userProperties = PropertiesService.getUserProperties();
+  var devProperties = PropertiesService.getScriptProperties();
+
+  //If config is not setup use defaults...
+  setupDefaults({
+    config: {
+      isSetup: false
+    },
+    pdf: {
+      name: "",
+      location: "",
+      save: false,
+      email: false
+    },
+    doc: {
+      name: "",
+      location: "",
+      save: false,
+      email: false
+    },
+    form: {
+      markers: null
+    },
+    template: {
+      id: "",
+      markers: null
     }
-    
-    //Try again to return template's folder otherwise just give it the root folder of the drive
-    try{
-      return template.getParents().next();
-    }catch(e){
-     Logger.log(e);
+    });
+  
+  var configSettings = getProp("document", "config");
+  
+  this.PDF = new pdf();
+  this.DOC = new document();
+  this.FORM = new form();
+  this.TEMPLATE = new template();
+
+  this.isSetup = function(arg){
+    if(!arg){
+      return configSettings.isSetup;
+    }else{
+      configSettings.isSetup = arg;
+      setProp("document", "config", configSettings);
     }
-    
-    return DriveApp.getRootFolder();
-  };
-  var pdfSaveLocation = function(){
-    //Either get specified save location or the location of the template.
-    try{
-      return PDF_SAVE_LOCATION ?  DriveApp.getFolderById(PDF_SAVE_LOCATION) : template.getParents().next();
-    }catch(e){
-      Logger.log(e);
-    }
-    
-    //Try to return template's folder otherwise just give it the root folder of the drive
-    try{
-      return template.getParents().next();
-    }catch(e){
-     Logger.log(e);
-    }
-    
-    return DriveApp.getRootFolder();
   };
   
-  return {
-    savePDF: savePDF(),
-    saveDocument: saveDocument(),
-    emailPDF: emailPDF(),
-    pdfName: pdfName(),
-    documentName: documentName(),
-    documentSaveLocation: documentSaveLocation(),
-    pdfSaveLocation: pdfSaveLocation()
+  function form(){
+    var propType = "document";
+    var key = "form";
+    var formSettings = getProp(propType, key);
+    
+    this.markers = function(arg){
+      if(!arg){
+        return formSettings.markers;
+      }else{
+        formSettings.markers = arg;
+        updateProp();
+      }
+    }
+    
+    function updateProp(){
+      setProp(propType, key, formSettings);
+    }
   }
-};
+  
+  function template(){
+    var propType = "document";
+    var key = "template";
+    var formSettings = getProp(propType, key);
+    
+    this.id = function(arg){
+      if(!arg){
+        return formSettings.id;
+      }else{
+        formSettings.id = arg;
+        updateProp();
+      }
+    }
+    
+    this.markers = function(arg){
+      if(!arg){
+        return formSettings.markers;
+      }else{
+        formSettings.markers = arg;
+        updateProp();
+      }
+    }
+    
+    function updateProp(){
+      setProp(propType, key, formSettings);
+    }
+  }
+  
+  function pdf(){
+    var propType = "document";
+    var key = "pdf";
+    var pdfSettings = getProp(propType, key);
+    
+    this.save = function save(arg){
+      if(!arg){
+        return pdfSettings.save;
+      }else{
+        pdfSettings.save = arg;
+        updateProp();
+      } 
+    }
+    
+    this.location = function(arg){
+      if(!arg){
+        var location = pdfSettings.location;
+        return location ? DriveApp.getFolderById(location) : DriveApp.getRootFolder();
+      }else{
+        pdfSettings.location = arg;
+        updateProp();
+      } 
+    }
+    
+    this.email = function(arg){
+      if(!arg){
+        return pdfSettings.email;
+      }else{
+        pdfSettings.email = arg;
+        updateProp();
+      } 
+    }
+    
+    this.name = function(arg){
+      if(!arg){
+        return pdfSettings.name;
+      }else{
+        pdfSettings.name = arg;
+        updateProp();
+      } 
+    }
+    
+    function updateProp(){
+      setProp(propType, key, pdfSettings);
+    }
+  }
+  
+  function document(){
+    var propType = "document";
+    var key = "doc";
+    var documentSettings = getProp(propType, key);
+    
+    this.save = function save(arg){
+      if(!arg){
+        return documentSettings.save;
+      }else{
+        documentSettings.save = arg;
+        updateProp();
+      } 
+    }
+    
+    this.location = function(arg){
+      if(!arg){
+        var location = documentSettings.location;
+        return location ? DriveApp.getFolderById(location) : DriveApp.getRootFolder();
+      }else{
+        documentSettings.location = arg;
+        updateProp();
+      } 
+    }
+    
+    this.email = function(arg){
+      if(!arg){
+        return documentSettings.email;
+      }else{
+        documentSettings.email = arg;
+        updateProp();
+      } 
+    }
+    
+    this.name = function(arg){
+      if(!arg){
+        return documentSettings.name;
+      }else{
+        documentSettings.name = arg;
+        updateProp();
+      } 
+    }
+    
+    function updateProp(){
+      setProp(propType, key, documentSettings);
+    }
+  }
+  
+  function email(){
+    var propType = "document";
+    var key = "email";
+    var formSettings = getProp(propType, key);
+    
+    function updateProp(){
+      setProp(propType, key, formSettings);
+    }
+  }
+  
+  function getProp(prop, key){
+    try{
+      switch(prop){
+        case "document":
+          return JSON.parse(documentProperties.getProperty(key));
+        case "user":
+          return JSON.parse(userProperties.getProperty(key));
+        case "dev":
+          return JSON.parse(devProperties.getProperty(key));
+        default:
+          return "Can not find key: " + key;
+      }
+    }catch(e){
+      log("getProp Error: " + e);
+      throw new e;
+    }
+    
+  }
+  
+  function setProp(prop, key, val){
+    try{
+      switch(prop){
+        case "document":
+          documentProperties.setProperty(key, JSON.stringify(val));
+          break;
+        case "user":
+          userProperties.setProperty(key, JSON.stringify(val));
+          break;
+        case "dev":
+          devProperties.setProperty(key, JSON.stringify(val));
+          break;
+        default:
+          //TODO Throw error?
+          return "Can not find key: " + key;
+      }
+    }catch(e){
+      log("setProp Error: " + e);
+      throw new e;
+    }
+  }
+  
+  function setupDefaults(defaults){
+    if(!documentProperties.getKeys())
+    {
+      log("Setting defaults...");
+      for (var prop in defaults) {
+        defaults[prop] = JSON.stringify(defaults[prop]);
+      }
+      
+      documentProperties.setProperties(defaults);
+    }
+  }
+}
 
 function inArray(value, array) {
   return array.indexOf(value) > -1;
@@ -83,8 +270,4 @@ function inArray(value, array) {
 
 function log(data){
   if(DEBUG){Logger.log(data)};
-}
-
-function showHelp(){
- log("Show help"); 
 }
