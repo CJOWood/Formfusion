@@ -11,66 +11,88 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-
-var ADDON_TITLE = "Formfusion";
+var ADDON_TITLE = "FormFusion";
 var NOTICE = "";
 
-
-/**
-  *
-  * USER-Defined settings.
-  *
-**/
-
-//FORM/TEMPLATE SETTINGS:
-
-//MARKERS is a list of question names that will be used to find and replace text in the template.
-var MARKERS = [];
-
-//This is the Id of the template to generate the document from the form.
-var TEMPLATE_ID = "";
-
-//Enter names for the document and PDF.
-var DOCUMENT_NAME = "";
-var PDF_NAME = ""; //excluding .pdf
-
-//These are the locations (folders) that the PDF and Document will be saved in. If empty the default is the same folder as the template.
-var DOCUMENT_SAVE_LOCATION = "";
-var PDF_SAVE_LOCATION = "";
-
-//Other settings:
-var OPTIONS = {
-  save_Document: true,
-  save_PDF: true,
-};
-
-
-/**
-  *
-  * System-settings. Do not edit below this line.
-  *
-**/
-var template;
 var DEBUG = true;
-Logger.log("Debug? " + DEBUG);
+var Settings = new Config();
 
-function onOpen() {
-  log("Setup Menu");
+//PropertiesService.getDocumentProperties().deleteAllProperties();
+function onOpen(e) {
+  initializeConfig();
   FormApp.getUi()
-      .createMenu('FormFusion')
-  .addItem("Help", "showHelp")
-      .addToUi();
+  .createMenu('FormFusion')
+  .addItem("Initialize Config", "initializeConfig")
+  .addItem("Populate Config", "populateConfig")
+  .addItem("Check Config", "showConfig")
+  .addItem("Delete Config", "deleteConfig")
+  .addToUi();
+}
+
+function populateConfig(){
+  log("Populating config with testing data...");
+  Settings.PDF.save(true);
+  Settings.PDF.name("TestPDF");
+  Settings.PDF.email(false);
+  Settings.PDF.location("17Ed4up1aH2Ax3h80K3vRwS322ZZ_5jUE");
+  
+  Settings.DOC.save(true);
+  Settings.DOC.name("TestDOC");
+  Settings.DOC.email(false);
+  Settings.DOC.location("1CP4vdafzsQ2gKe-VK7ME4_zFtoAWwflf");
+  
+  Settings.FORM.markers([]);
+  
+  Settings.TEMPLATE.id("1Yc1KCKmTuJlNY6JWUmMBEhDstv4b4ZFaHZQ_4bBTmD8");
+  Settings.TEMPLATE.markers(["Last Name", "First Name"]);
+  
+  Settings.isSetup(true);
+}
+
+function showConfig(){
+  try{
+    FormApp.getUi().alert("Config:" + JSON.stringify(Settings) + "\n" +
+      "PDF:" + JSON.stringify(Settings.PDF) + "\n" +
+        "PDF.save:" + JSON.stringify(Settings.PDF.save()) + "\n" +
+          "PDF.name:" + JSON.stringify(Settings.PDF.name()) + "\n" +
+            "PDF.email:" + JSON.stringify(Settings.PDF.email()) + "\n" +
+              "DOC:" + JSON.stringify(Settings.DOC) + "\n" +
+                "FORM:" + JSON.stringify(Settings.FORM) + "\n" +
+                  "TEMPLATE:" + JSON.stringify(Settings.TEMPLATE)); 
+  }catch(e){log("showConfig Error: " + e)}
+}
+
+function initializeConfig(){
+  log("initializing Config...");
+  Settings = new Config();
+  log("Config Initialized!");
+}
+
+function deleteConfig(){
+  PropertiesService.getDocumentProperties().deleteAllProperties();
+  //Settings = new Config();
+  log("CONFIG DELETED");
+  FormApp.getUi().alert("Config Deleted");
+}
+
+function onInstall(e){
+  log("onInstall running...");
+  //Setup stuff
+  onOpen(e); 
+  //maybe mark Settings.isStarted() as false??
 }
 
 function onFormSubmit(e) {
-  log("Form Submitted.");
+  try{
+    if(!Settings.isSetup()){return} //If not setup dont do anything.
+  }catch(e){
+    log("Settings issue: " + e); 
+  }
+  
+  log("Form Submitted... Getting template: " + Settings.TEMPLATE.id());
   
   //Get the template document.
-  template = DriveApp.getFileById(TEMPLATE_ID);
-  
-  //Get the Settings
-  settings = options();
-  log(settings);
+  var template = DriveApp.getFileById(Settings.TEMPLATE.id());
   
   //Get the form response object
   var formResponse = e.response;
@@ -79,23 +101,23 @@ function onFormSubmit(e) {
   //Get the items (questions) from the response object
   var answers = formResponse.getItemResponses();
   
-  log("Creating document from template.: " + settings.documentName);
+  log("Creating document from template.: " + Settings.DOC.name());
   //This makes a copy of the template and gets the new doc's id.
-  var documentId = template.makeCopy(settings.documentName, settings.documentSaveLocation).getId();
+  var documentId = template.makeCopy(Settings.DOC.name(), Settings.DOC.location()).getId();
   //This opens the new document
   var document = DocumentApp.openById(documentId);
   //This get the body of the document where we will look for values to replace.
   var documentBody = document.getBody();  
   
   log("Replacing markers with answers: " + answers);
-  //This is where we go through the list of markers and try to find them in the document body to replace with the question answers.
+  //This is where we go thorugh the list of markers and try to find them in the document body to replace with the question answers.
   for(var i = 0; i < answers.length; i++){
     var answer = answers[i];
     var answerTitle = answer.getItem().getTitle(); 
     
     var replacedMarkerElements = [];
     
-    if(inArray(answerTitle, MARKERS)){
+    if(inArray(answerTitle, Settings.TEMPLATE.markers())){
       //Marker is in the template => replace marker with question answer.
       //FUTURE: Check question type and make adjustments.
       try{
@@ -108,36 +130,38 @@ function onFormSubmit(e) {
     } else {
       //Couldn't find marker in the list of answer titles
       //TODO Report error to the user! Maybe by email?
-      Logger.log("Couldn't find answer title '" + answerTitle + "' in list of MARKERS.");
+      log("Couldn't find answer title '" + answerTitle + "' in list of MARKERS.");
     }
   }
   log("Markers replaced.");
   //So we have a document and all the markers have been replaced with answers from the form...
   
-  log("Checking if savePDF:" + settings.savePDF);
+  log("Checking if savePDF:" + Settings.PDF.save());
   //Now lets check if we want to generate a PDF
-  if(settings.savePDF){
+  if(Settings.PDF.save()){
     log("Saving PDF");
     //document must be saved and closed before we can make a PDF from it.
     document.saveAndClose();
     
     //generate and save the pdf.
     var pdfBlob = document.getAs('application/pdf');
-    pdfBlob.setName(settings.pdfName);
-    settings.pdfSaveLocation.createFile(pdfBlob);
+    pdfBlob.setName(Settings.PDF.name());
+    Settings.PDF.location().createFile(pdfBlob);
   }
   
-  log("Checking if saveDocument: " + settings.saveDocument);
+  log("Checking if saveDocument: " + Settings.DOC.save());
   //Now check if we DO NOT want to save the document
-  if(!settings.saveDocument){
+  if(!Settings.DOC.save()){
     log("Deleting document");
     //delete it.
     document.trashed(true);
   }
   
   
-  log("----FormFusion COMPLETED SUCESSFULLY----");
+  log("----DOCFILLER COMPLETED SUCESSFULLY----");
 }
+
+
 
 
 
