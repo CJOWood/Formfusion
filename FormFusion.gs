@@ -34,16 +34,16 @@ function populateConfig(){
   Settings.PDF.save(true);
   Settings.PDF.name("TestPDF");
   Settings.PDF.email(false);
-  Settings.PDF.location("17Ed4up1aH2Ax3h80K3vRwS322ZZ_5jUE");
+  Settings.PDF.location(""); //Drive Folder ID
   
   Settings.DOC.save(true);
   Settings.DOC.name("TestDOC");
   Settings.DOC.email(false);
-  Settings.DOC.location("1CP4vdafzsQ2gKe-VK7ME4_zFtoAWwflf");
+  Settings.DOC.location(""); //Drive Folder ID
   
   Settings.FORM.markers([]);
   
-  Settings.TEMPLATE.id("1Yc1KCKmTuJlNY6JWUmMBEhDstv4b4ZFaHZQ_4bBTmD8");
+  Settings.TEMPLATE.id(""); //Template Doc Id
   Settings.TEMPLATE.markers(["Last Name", "First Name"]);
   
   Settings.isSetup(true);
